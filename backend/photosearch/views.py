@@ -45,7 +45,11 @@ def search(request):
         "needs_clarification": False,
         "clarifying_question": None,
         "results": [
-            {"filename": m.filename, "caption": m.caption}
+            {
+                "filename": m.filename,
+                "caption": m.caption,
+                "image_url": request.build_absolute_uri(f"/media/{m.filename}"),
+            }
             for m in result.ranked_matches
         ],
     })

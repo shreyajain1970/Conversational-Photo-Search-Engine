@@ -1,122 +1,65 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState } from "react";
+import SearchBar from "./components/SearchBar";
+import ResultsList from "./components/ResultsList";
+import ClarificationPrompt from "./components/ClarificationPrompt";
+import { searchPhotos } from "./api/photoSearch";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [results, setResults] = useState([]);
+  const [clarifyingQuestion, setClarifyingQuestion] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  // Keep track of the original query so a clarification answer can be
+  // combined with it into a richer follow-up query.
+  const [originalQuery, setOriginalQuery] = useState(null);
+
+  async function handleSearch(query) {
+    setLoading(true);
+    setError(null);
+
+    // If we're currently in a clarification round, combine the user's
+    // answer with the original query for a more specific re-search.
+    const effectiveQuery = clarifyingQuestion
+      ? `${originalQuery} — ${query}`
+      : query;
+
+    try {
+      const data = await searchPhotos(effectiveQuery);
+
+      if (data.needs_clarification) {
+        setClarifyingQuestion(data.clarifying_question);
+        setResults([]);
+        // Only set originalQuery the first time we enter a clarification
+        // round — don't overwrite it if the user gets asked twice.
+        if (!clarifyingQuestion) {
+          setOriginalQuery(query);
+        }
+      } else {
+        setClarifyingQuestion(null);
+        setOriginalQuery(null);
+        setResults(data.results);
+      }
+    } catch (err) {
+      setError("Something went wrong. Is the backend server running?");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="app">
+      <h1>Conversational Photo Search</h1>
 
-      <div className="ticks"></div>
+      <SearchBar onSearch={handleSearch} disabled={loading} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      {loading && <p className="status-message">Searching...</p>}
+      {error && <p className="status-message error">{error}</p>}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <ClarificationPrompt question={clarifyingQuestion} />
+
+      <ResultsList results={results} />
+    </div>
+  );
 }
-
-export default App
