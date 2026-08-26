@@ -2,3 +2,5 @@ torch
 transformer==4.44.2s
 pillow
 scikit-learn
+google-genai
+python-dotenv
