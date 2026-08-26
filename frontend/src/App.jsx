@@ -13,11 +13,11 @@ export default function App() {
   // Keep track of the original query so a clarification answer can be
   // combined with it into a richer follow-up query.
   const [originalQuery, setOriginalQuery] = useState(null);
-
+  const [hasSearched, setHasSearched] = useState(false);
   async function handleSearch(query) {
     setLoading(true);
     setError(null);
-
+    setHasSearched(true);
     // If we're currently in a clarification round, combine the user's
     // answer with the original query for a more specific re-search.
     const effectiveQuery = clarifyingQuestion
@@ -54,10 +54,14 @@ export default function App() {
 
       <SearchBar onSearch={handleSearch} disabled={loading} />
 
-      {loading && <p className="status-message">Searching...</p>}
+            {loading && <p className="status-message">Searching...</p>}
       {error && <p className="status-message error">{error}</p>}
 
       <ClarificationPrompt question={clarifyingQuestion} />
+
+      {!loading && !error && !clarifyingQuestion && hasSearched && results.length === 0 && (
+        <p className="status-message">No matching photos found. Try describing it differently.</p>
+      )}
 
       <ResultsList results={results} />
     </div>
