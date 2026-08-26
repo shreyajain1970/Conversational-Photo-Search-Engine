@@ -56,7 +56,9 @@ def caption_directory(image_dir: str, processor, model) -> dict:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--image_dir", required=True, help="Folder of photos to caption")
+    parser.add_argument(
+        "--image_dir", required=True, help="Folder of photos to caption"
+    )
     parser.add_argument("--out", default="captions.json", help="Output JSON path")
     args = parser.parse_args()
 

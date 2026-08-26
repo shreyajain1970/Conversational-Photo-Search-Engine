@@ -40,7 +40,10 @@ class CaptionIndex:
         self.captions: List[str] = list(captions.values())
         self.vectorizer = TfidfVectorizer(
             stop_words="english",
-            ngram_range=(1, 2),   # unigrams + bigrams: "red car" beats matching "red" and "car" separately
+            ngram_range=(
+                1,
+                2,
+            ),  # unigrams + bigrams: "red car" beats matching "red" and "car" separately
         )
         self._matrix = None
         self.fit()
@@ -72,11 +75,13 @@ class CaptionIndex:
         for idx, score in ranked[:top_k]:
             if score <= 0:
                 continue
-            results.append(Match(
-                filename=self.filenames[idx],
-                caption=self.captions[idx],
-                score=float(score),
-            ))
+            results.append(
+                Match(
+                    filename=self.filenames[idx],
+                    caption=self.captions[idx],
+                    score=float(score),
+                )
+            )
         return results
 
 
